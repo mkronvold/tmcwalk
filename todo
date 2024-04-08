@@ -1,0 +1,5 @@
+add error checking for no .kube/config
+
+if cannot read cluster list, use cached list from ?
+
+check for python

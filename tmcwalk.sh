@@ -7,7 +7,29 @@ WORK=getinputs
 
 hr () { printf "%0$(tput cols)d" | tr 0 ${1:-=}; }
 
-which fzf-tmux &> /dev/null && fzf="$(which fzf-tmux) --tac --height 90%" || fzf="fzf"
+
+if [ $(which fzf-tmux) ]; then
+  fzf="$(which fzf-tmux) --tac --height 90%"
+else
+  echo "fzf-tmux not found in path"
+  echo "install fzf:"
+  echo ""
+  echo "cd ${HOME}"
+  echo "git clone --depth 1 https://github.com/junegunn/fzf.git ~/.fzf"
+  echo "${HOME}/.fzf/install --bin"
+  exit
+fi
+
+if [ $(which csvgrep) ]; then
+  csvkit=$(csvgrep -V|awk '{print $2}')
+  if [ ! "${csvkit}" == "1.2.0" ]; then
+    echo "csvkit not found"
+    echo "install csvkit version 1.2.0"
+    echo ""
+    echo "pip install --upgrade csvkit==1.2.0"
+    exit
+  fi
+fi
 
 while [[ $# -gt 0 ]] && [[ "$1" == "--"* ]] ;
 do
@@ -100,6 +122,13 @@ while [ $WORK ]; do
     "viewcommand" )
       $command
       hr
+      echo "#"$command
+      echo "To retrieve a kubeconfig for this: "
+      if [ "${namespace}" == "WHOLE_CLUSTER" ]; then
+        command="tanzu tmc cluster kubeconfig get -m $supervisor -p $provisioner $cluster"
+      else
+        command="tanzu tmc cluster kubeconfig get -m $supervisor -p $provisioner $cluster -n $namespace"
+      fi
       echo "#"$command
       WORK=
       ;;
