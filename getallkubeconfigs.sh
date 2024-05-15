@@ -28,7 +28,8 @@ supervisor=$(tanzu tmc management-cluster list -o json | jq -r '.managementClust
 
 for cluster in $(tanzu tmc cluster list -m $supervisor -o json | jq -r '.clusters[] | "\(.fullName.name)"')
 do
-  provisioner=$(tanzu tmc cluster list -m $supervisor -o json | jq -r '.clusters[] | "\(.fullName.managementClusterName),\(.fullName.name),\(.fullName.provisionerName)"' | csvgrep -H -c 1 -m $supervisor | csvgrep -c 2 -m $cluster | csvcut -c 3 | tail -n +2)
+  regex=^${cluster}$
+  provisioner=$(tanzu tmc cluster list -m $supervisor -o json | jq -r '.clusters[] | "\(.fullName.managementClusterName),\(.fullName.name),\(.fullName.provisionerName)"' | csvgrep -H -c 1 -m $supervisor | csvgrep -c 2 -r $regex | csvcut -c 3 | tail -n +2)
   OUTFILE=${HOME}/.kube/${cluster}.yaml
   command="tanzu tmc cluster kubeconfig get -m $supervisor -p $provisioner $cluster"
   $command > $OUTFILE
